@@ -4,6 +4,7 @@ import {
   createPoll,
   getResult,
   votePoll,
+  closePoll,
 } from "../controllers/poll.controller.js";
 
 const router = Router();
@@ -11,5 +12,6 @@ const router = Router();
 router.post("/", checkPoint, createPoll);
 router.post("/:pollId/vote", checkPoint, votePoll);
 router.get("/:pollId/results", getResult);
+router.patch("/:pollId/close", checkPoint, closePoll);
 
 export default router;
