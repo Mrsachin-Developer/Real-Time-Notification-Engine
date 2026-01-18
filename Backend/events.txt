@@ -1,0 +1,61 @@
+1️⃣ Poll Domain Events
+Event Name	Meaning
+POLL.CREATED	A poll now exists
+POLL.UPDATED	Poll details changed
+POLL.DELETED	Poll removed
+POLL.CLOSED	    Voting is no longer allowed
+POLL.VOTE_CAST	A user successfully voted
+------------------------------------------------
+
+
+
+2️⃣ Event Envelope (Universal Structure)
+-------------------------------------------
+Every event — no matter what type — follows the same shape.
+
+This is called an event envelope.
+
+Event Envelope Fields
+Field	    Why It Exists
+------------------------------
+eventId	    Prevent duplicates
+eventType	What happened
+timestamp	When it happened
+version	    Future-proofing
+actor	    Who triggered it
+source	    Which service
+data	    Event-specific info
+
+
+---------------------------------
+3️⃣ Priority Levels (System Thinking)
+
+Not all events are equal.
+
+Priority Classes
+
+Level	    Meaning	            Example
+-----------------------------------------
+CRITICAL	Must notify	        POLL.CLOSED
+NORMAL	    Good to notify	    POLL.CREATED
+LOW	        Analytics only	    POLL.VOTE_CAST
+
+
+
+Queue:
+- Producer emits events
+- Worker consumes
+- ACK when done
+
+Worker:
+- Infinite loop
+- Switch on eventType
+- Apply business rules
+
+WebSocket:
+- Map userId → socket
+- Push if online
+
+DB:
+- Notifications stored
+- isRead flag
