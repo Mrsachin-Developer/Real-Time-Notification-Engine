@@ -26,17 +26,21 @@ export const createPoll = async (req, res) => {
     });
 
     // 🔔 EVENT: POLL CREATED
-    pushEvent({
-      eventId: uuid(),
-      eventType: "POLL.CREATED",
-      timestamp: new Date().toISOString(),
-      source: "poll-service",
-      actor: { userId: req.user.userId },
-      data: {
-        pollId: poll._id,
-        question: poll.question,
-      },
-    });
+    try {
+      pushEvent({
+        eventId: uuid(),
+        eventType: "POLL.CREATED",
+        timestamp: new Date().toISOString(),
+        source: "poll-service",
+        actor: { userId: req.user.userId },
+        data: {
+          pollId: poll._id,
+          question: poll.question,
+        },
+      });
+    } catch (e) {
+      console.error("Event emit failed:", e.message);
+    }
 
     return res.status(201).json({
       message: "Poll is created",
@@ -89,17 +93,21 @@ export const votePoll = async (req, res) => {
     }
 
     // 🔔 EVENT: VOTE CAST
-    pushEvent({
-      eventId: uuid(),
-      eventType: "POLL.VOTE_CAST",
-      timestamp: new Date().toISOString(),
-      source: "poll-service",
-      actor: { userId },
-      data: {
-        pollId,
-        optionId,
-      },
-    });
+    try {
+      pushEvent({
+        eventId: uuid(),
+        eventType: "POLL.VOTE_CAST",
+        timestamp: new Date().toISOString(),
+        source: "poll-service",
+        actor: { userId },
+        data: {
+          pollId,
+          optionId,
+        },
+      });
+    } catch (e) {
+      console.error("Event emit failed:", e.message);
+    }
 
     res.status(200).json({
       success: true,
@@ -109,6 +117,61 @@ export const votePoll = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Voting failed",
+      error: error.message,
+    });
+  }
+};
+
+export const closePoll = async (req, res) => {
+  try {
+    const { pollId } = req.params;
+    const userId = req.user.userId;
+
+    const poll = await Poll.findOneAndUpdate(
+      {
+        _id: pollId,
+        createdBy: userId,
+        isActive: true,
+      },
+      {
+        isActive: false,
+      },
+      { new: true },
+    );
+
+    if (!poll) {
+      return res.status(404).json({
+        success: false,
+        message: "Poll not found or already closed",
+      });
+    }
+
+    // 🔔 EVENT: POLL CLOSED
+    try {
+      pushEvent({
+        eventId: uuid(),
+        eventType: "POLL.CLOSED",
+        timestamp: new Date().toISOString(),
+        source: "poll-service",
+        actor: { userId },
+        data: {
+          pollId: poll._id,
+          question: poll.question,
+        },
+      });
+    } catch (e) {
+      console.error("Event emit failed:", e.message);
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Poll closed successfully",
+      data: poll,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to close poll",
       error: error.message,
     });
   }
@@ -129,13 +192,13 @@ export const getResult = async (req, res) => {
     }
 
     /**syntax for reduce
-   * 
-   * 
-    array.reduce((accumulator, currentItem) => {
-        return newAccumulatorValue;
-    }, startingValue)
-  
-  */
+     * 
+     * 
+      array.reduce((accumulator, currentItem) => {
+          return newAccumulatorValue;
+      }, startingValue)
+    
+    */
 
     const totalVotes = findPoll.options.reduce(
       (sum, opt) => sum + opt.votes,
