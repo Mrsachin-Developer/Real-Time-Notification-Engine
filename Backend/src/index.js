@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 import userRouter from "./routes/user.routes.js";
 import pollRouter from "./routes/poll.routes.js";
 import notificationRoutes from "./routes/notification.routes.js";
+import "./schedulers/pollExpiryScheduler.js";
 
 dotenv.config({
   path: [".env.local", ".env"],
