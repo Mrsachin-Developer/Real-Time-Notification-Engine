@@ -61,7 +61,7 @@ Features are **decoupled**
 
 ---
 
-## 🧩 Core Concepts You Learned
+## 🧩 Core Concepts I Learned
 
 ### 1️⃣ Event
 
